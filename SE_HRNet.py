@@ -151,9 +151,10 @@ class SE_HRNet(object):
                 # Get concatenated feature maps
                 out_maps = self.multi_resolution_concat(features, self.filter_list)
                 features = []
+                print('Identity Mapping:')
                 # Residual connection with 3x3 kernel, 1x1 stride with same number of filters
                 for idx, (fm, num_filter) in enumerate(zip(out_maps, self.filter_list)):
-                    x = self.residual_layer(num_filter, scope=scope, first_layer_stride=(1, 1), res_block=self.blocks)(fm)
+                    x = Lambda(lambda x: x, output_shape=x.get_shape().as_list())(fm)
                     print(idx, x)
                     features.append(x)
                 filters *= 2
@@ -198,8 +199,38 @@ class SE_HRNet(object):
 
         return Model(inputs=input_x, outputs=x)
 
+
+def get_model_memory_usage(batch_size, model):
+    import numpy as np
+    import tensorflow.keras.backend as K
+
+    shapes_mem_count = 0
+    for l in model.layers:
+        single_layer_mem = 1
+        for s in l.output_shape:
+            if s is None:
+                continue
+            single_layer_mem *= s
+        shapes_mem_count += single_layer_mem
+
+    trainable_count = np.sum([K.count_params(p) for p in set(model.trainable_weights)])
+    non_trainable_count = np.sum([K.count_params(p) for p in set(model.non_trainable_weights)])
+
+    number_size = 4.0
+    if K.floatx() == 'float16':
+        number_size = 2.0
+    if K.floatx() == 'float64':
+        number_size = 8.0
+
+    total_memory = number_size * (batch_size * shapes_mem_count + trainable_count + non_trainable_count)
+    gbytes = np.round(total_memory / (1024.0 ** 3), 3)
+    return gbytes
+
+
 if __name__ == '__main__':
     model = SE_HRNet(blocks=3, reduction_ratio=4, init_filters=32, training=True
                      ).build(input_shape=(2048, 2048, 3), num_output=2, repetitions=4)
     print(model.summary())
     print(get_model_memory_usage(1, model))
+    from tensorflow.python.keras.utils import plot_model
+    plot_model(model, to_file='se_hrnet.png')
