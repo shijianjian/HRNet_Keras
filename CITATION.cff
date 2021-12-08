@@ -1,0 +1,8 @@
+cff-version: 1.1.0
+message: "If you use this code in your research, please cite it as below."
+authors:
+  - family-names: Shi
+    given-names: Jian
+title: shijianjian/HRNet_Keras: SE-HRNet-Keras
+version: v0.1
+date-released: 2017-12-18
