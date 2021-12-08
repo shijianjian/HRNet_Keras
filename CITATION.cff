@@ -5,4 +5,6 @@ authors:
     given-names: Jian
 title: shijianjian/HRNet_Keras: SE-HRNet-Keras
 version: v0.1
+doi: 10.5281/zenodo.5767622
+url: "https://github.com/shijianjian/HRNet_Keras"
 date-released: 2017-12-18
